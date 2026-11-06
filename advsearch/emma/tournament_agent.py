@@ -1,7 +1,13 @@
-import random
+import time
 from typing import Tuple
-from ..othello.gamestate import GameState
 from ..othello.board import Board
+from .minimax import minimax_move
+from .othello_minimax_custom import evaluate_custom
+
+TIME_BUDGET = 4.0 # segundos, com margem de 1s para o limite
+
+class _Timeout(Exception):
+    pass
 
 def make_move(state) -> Tuple[int, int]:
     """
@@ -13,11 +19,28 @@ def make_move(state) -> Tuple[int, int]:
     :return: (int, int) tuple with x, y coordinates of the move (remember: 0 is the first row/column)
     """
 
-    # o codigo abaixo apenas retorna um movimento aleatorio valido para
-    # a primeira jogada 
-    # Remova-o e coloque a sua implementacao da poda alpha-beta
+    moves = state.legal_moves()
 
-    if state.game_name == 'Othello':
-        return random.choice([(2, 3), (4, 5), (5, 4), (3, 2)])
+    if len(moves) == 1:
+        return next(iter(moves))
+
+    deadline = time.time() + TIME_BUDGET
+
+    def timed_eval(s, player: str) -> float:
+        if time.time() > deadline:
+            raise _Timeout()
+        
+        return evaluate_custom(s, player)
+
+    best = next(iter(moves))
+    max_possible_depth = state.board.num_pieces(Board.EMPTY)
+
+    for depth in range(1, max_possible_depth + 1):
+        try:
+            best = minimax_move(state, depth, timed_eval)
+        except _Timeout:
+            break
+
+    return best
 
 
