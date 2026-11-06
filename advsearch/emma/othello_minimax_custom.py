@@ -1,8 +1,9 @@
-import random
 from typing import Tuple
 from ..othello.gamestate import GameState
 from ..othello.board import Board
 from .minimax import minimax_move
+
+MAX_DEPTH = 4
 
 def make_move(state) -> Tuple[int, int]:
     """
@@ -22,5 +23,5 @@ def evaluate_custom(state, player:str) -> float:
     :param state: state to evaluate (instance of GameState)
     :param player: player to evaluate the state for (B or W)
     """
-    
+
     return 0
