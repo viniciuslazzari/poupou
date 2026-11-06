@@ -1,5 +1,4 @@
 from typing import Tuple
-from ..othello.gamestate import GameState
 from ..othello.board import Board
 from .minimax import minimax_move
 
