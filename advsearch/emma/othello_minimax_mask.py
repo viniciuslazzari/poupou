@@ -24,6 +24,8 @@ EVAL_TEMPLATE = [
     [100, -30, 6, 2, 2, 6, -30, 100]
 ]
 
+MAX_DEPTH = 4 
+
 
 def make_move(state) -> Tuple[int, int]:
     """
@@ -37,7 +39,7 @@ def make_move(state) -> Tuple[int, int]:
     # Remova-o e coloque uma chamada para o minimax_move (que vc implementara' no modulo minimax).
     # A chamada a minimax_move deve receber sua funcao evaluate como parametro.
 
-    return random.choice([(2, 3), (4, 5), (5, 4), (3, 2)])
+    return minimax_move(state, MAX_DEPTH, evaluate_mask)
 
 
 def evaluate_mask(state, player:str) -> float:
@@ -49,4 +51,15 @@ def evaluate_mask(state, player:str) -> float:
     :param state: state to evaluate (instance of GameState)
     :param player: player to evaluate the state for (B or W)
     """
-    return 0   # substitua pelo seu codigo
+
+    opponent = Board.opponent(player)
+    score = 0
+
+    for row, line in enumerate(state.board.tiles):
+        for col, tile in enumerate(line):
+            if tile == player:
+                score += EVAL_TEMPLATE[row][col]
+            elif tile == opponent:
+                score -= EVAL_TEMPLATE[row][col]
+
+    return score
