@@ -31,6 +31,7 @@ def evaluate_custom(state, player:str) -> float:
 
     if state.is_terminal():
         diff = board.num_pieces(player) - board.num_pieces(opponent)
+        
         if diff > 0:
             return 1000
         
