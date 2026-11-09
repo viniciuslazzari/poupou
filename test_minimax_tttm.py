@@ -6,8 +6,8 @@ from advsearch.tttm.gamestate import GameState
 import advsearch.timer as timer
 
 # mude your_agent pelo nome do seu modulo nos imports abaixo
-import advsearch.emma.minimax as minimax          
-import advsearch.emma.tttm_minimax as tttm_agent  
+import advsearch.poupou.minimax as minimax          
+import advsearch.poupou.tttm_minimax as tttm_agent  
 
 def mirror_move(state: GameState) -> Tuple[int, int]:
     """
@@ -48,7 +48,7 @@ class TestAlphaBetaTTTM(unittest.TestCase):
 
     def test_utility(self):
         """
-        Esse teste verifica a funcao utility em advsearch.emma.tttm_minimax
+        Esse teste verifica a funcao utility em advsearch.poupou.tttm_minimax
         """
 
         # estado terminal com vitoria das brancas

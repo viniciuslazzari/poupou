@@ -1,8 +1,8 @@
 import unittest
 
 # mude your_agent pelo nome do seu modulo nos imports abaixo
-from advsearch.emma.othello_minimax_count import evaluate_count 
-from advsearch.emma.othello_minimax_mask import evaluate_mask  
+from advsearch.poupou.othello_minimax_count import evaluate_count 
+from advsearch.poupou.othello_minimax_mask import evaluate_mask  
 from advsearch.othello.board import Board
 from advsearch.othello.gamestate import GameState
 
