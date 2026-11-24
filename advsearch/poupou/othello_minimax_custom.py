@@ -7,6 +7,9 @@ MAX_DEPTH = 4
 # cada quina (linha, coluna) -> a casa na diagonal dela ("X-square")
 CORNERS = {(0, 0): (1, 1), (0, 7): (1, 6), (7, 0): (6, 1), (7, 7): (6, 6)}
 
+# as 8 casas vizinhas de uma casa (linha, coluna)
+NEIGHBORS = [(-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1)]
+
 def make_move(state) -> Tuple[int, int]:
     """
     Returns a move for the given game state
@@ -57,4 +60,13 @@ def evaluate_custom(state, player:str) -> float:
     # mobilidade: quantas jogadas eu tenho a mais que o oponente
     mobility = len(board.legal_moves(player)) - len(board.legal_moves(opponent))
 
-    return 10 * corners + 5 * x_squares + mobility
+    # fronteira: pecas encostadas em casa vazia dao jogadas ao oponente
+    frontier = 0
+    for r in range(8):
+        for c in range(8):
+            tile = board.tiles[r][c]
+            
+            if tile != Board.EMPTY and any(0 <= r + a < 8 and 0 <= c + b < 8 and board.tiles[r + a][c + b] == Board.EMPTY for a, b in NEIGHBORS):
+                frontier += -1 if tile == player else 1
+
+    return 10 * corners + 5 * x_squares + mobility + frontier
