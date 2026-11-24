@@ -71,34 +71,59 @@ o agente é o empate, caso ambos os jogadores joguem de maneira perfeita.
 
 ### 3.1 Heurísticas de contagem e de valor posicional
 
-TODO: descrevam brevemente:
+- **Contagem (`evaluate_count`)**: retorna a diferença entre o número de peças do jogador e o do oponente, usando
+  `num_pieces` do tabuleiro. É a heurística mais simples e só retorna uma valor para o estado atual: durante o jogo as peças mudam de cor frequentemente, então ter mais peças agora não necessarimanete signifa uma vantagem.
 
-- **Contagem (`evaluate_count`)**: peças do jogador − peças do oponente;
-- **Valor posicional (`evaluate_mask`)**: soma dos valores de `EVAL_TEMPLATE` nas casas do jogador − nas casas do oponente (máscara do kit, sem alteração).
+- **Valor posicional (`evaluate_mask`)**: itera o tabuleiro somando o valor da máscara `EVAL_TEMPLATE` (fornecida
+  pelo kit e mantida sem alterações) em cada casa ocupada pelo jogador e subtraindo o valor das casas ocupadas pelo
+  oponente. A máscara valoriza as quinas (100) e penaliza as casas vizinhas a elas (−30 e −50), que costumam
+  entregar a quina ao adversário (uma estratégia utilizada também na heurística customizada).
 
 ### 3.2 Heurística customizada (`evaluate_custom`)
 
-TODO: expliquem a heurística com suas palavras. Ela combina quatro termos:
+A heurística implementada combina 4 estratégias diferentes para avaliar o estado do jogo:
 
-| Termo | Peso | O que mede |
-|---|---|---|
-| Quinas | ±10 por quina | Quinas nunca podem ser viradas |
-| X-squares | ∓5 por casa | Casa diagonal a uma quina **vazia**: costuma entregar a quina ao oponente |
-| Mobilidade | ±1 por jogada | Jogadas legais do jogador − jogadas legais do oponente |
-| Fronteira | ∓1 por peça | Peças encostadas em casa vazia dão jogadas ao oponente |
-| Fim de jogo | ±1000 / 0 | Em estado terminal, só importa vitória, derrota ou empate |
+- **Quinas** (±10 por quina): assim como na máscara de `evaluate_mask`, as quinas são valorizadas porque uma peça em
+  uma quina nunca pode ser virada pelo adversário, o que as torna muito valiosas para quem as obtém. Cada quina do
+  jogador soma 10 pontos, e cada quina do oponente subtrai 10.
+- **X-squares** (∓5 por casa): também penalizados em `evaluate_mask`, os X-squares são as casas na diagonal de uma
+  quina. Um jogador que ocupa um X-square enquanto a quina ainda está vazia costuma entregar essa quina ao oponente.
+  Por isso, cada X-square do jogador subtrai 5 pontos e cada X-square do oponente soma 5. Diferente da máscara, que
+  usa valores fixos, esse termo só conta enquanto a quina correspondente está vazia: depois que ela é ocupada, o
+  perigo deixa de existir.
+- **Mobilidade** (±1 por jogada): uma ideia nova em relação às heurísticas anteriores. Ela calcula quantas jogadas
+  legais o estado garante ao jogador e quantas garante ao oponente, e subtrai uma da outra. Um estado em que o jogador
+  tem muito mais opções que o adversário é melhor, pois permite esperar por boas jogadas, enquanto o oponente com
+  poucas opções acaba forçado a fazer jogadas ruins.
+- **Fronteira** (∓1 por peça): conta as peças que estão encostadas em pelo menos uma casa vazia (nas 8 direções).
+  Essas peças de fronteira dão ao oponente lugares onde jogar e podem ser viradas com facilidade. Por isso, cada peça
+  de fronteira do jogador subtrai 1 ponto, e cada peça de fronteira do oponente soma 1. Esse termo complementa a
+  mobilidade: ela mede as jogadas disponíveis agora, enquanto a fronteira estima as jogadas que o oponente terá
+  depois.
 
-TODO: escrevam como chegaram aos pesos (ver seção 5, experimentos).
+Por fim, quando o estado é terminal (nenhum dos jogadores tem jogadas), a heurística ignora esses termos e retorna
+apenas o resultado da partida: +1000 em caso de vitória, −1000 em caso de derrota e 0 em caso de empate. O valor
+1000 é maior do que qualquer pontuação que um estado não terminal pode alcançar, então uma vitória garantida sempre
+é preferida a qualquer outra estimativa.
 
-**Fontes consultadas** — TODO: digam como foram usadas (ex.: conceitos tirados das fontes e combinados pelo grupo; pesos definidos por testes próprios):
+| Termo | Peça/casa do jogador | Peça/casa do oponente | O que mede |
+|---|---|---|---|
+| Quinas | +10 por quina | −10 por quina | Quinas nunca podem ser viradas |
+| X-squares (só com a quina vazia) | −5 por casa | +5 por casa | Casa diagonal a uma quina vazia: costuma entregar a quina ao oponente |
+| Mobilidade | +1 por jogada legal | −1 por jogada legal | Quem tem mais opções de jogada |
+| Fronteira | −1 por peça | +1 por peça | Peças encostadas em casa vazia dão jogadas futuras ao oponente |
+| Fim de jogo | +1000 se vence | −1000 se perde | Em estado terminal, só o resultado importa (0 no empate) |
+
+A pontuação final é `10 × quinas + 5 × x_squares + mobilidade + fronteira`, em que cada termo já é a diferença entre
+o jogador e o oponente (com o sinal da tabela).
+
+**Fontes consultadas**
 
 - [Computer Othello — Wikipedia](https://en.wikipedia.org/wiki/Computer_Othello)
 - [otto-othello (pesos por fase do jogo)](https://github.com/eigenfoo/otto-othello)
 - [An Analysis of Othello AI Strategies](https://barberalec.github.io/pdf/An_Analysis_of_Othello_AI_Strategies.pdf)
 - [Reversi Strategy Guide](https://reversi-baj.pages.dev/articles/reversi-strategy-guide/)
 - [Reversi Parity Guide](https://reversi-baj.pages.dev/articles/reversi-parity-guide/)
-- [Reversi & Othello Glossary](https://rarepike.com/reversi/glossary/)
-- [Reversi AI and Computer Players](https://rarepike.com/reversi/computer-ai/)
 
 ### 3.3 Critério de parada
 
@@ -107,7 +132,10 @@ TODO: escrevam como chegaram aos pesos (ver seção 5, experimentos).
 | Contagem, posicional, customizada | Profundidade máxima fixa = 4 | 0,19 s / 0,30 s / 0,35 s |
 | Agente do torneio | Aprofundamento iterativo, interrompido aos 4 s | ≈ 4,0 s (limite do servidor: 5 s) |
 
-TODO: justifiquem a escolha da profundidade 4 e da folga de 1 s.
+Para as heurísticas mais simples, uma profundidade máxima fixa de 4 níveis foi escolhida, pois permitia iterar
+rapidamente sobre os resultados e testes. Para o agente do torneio, o limite de 5 segundos foi levado em consideração:
+o agente busca iterativamente até atingir 4 segundos de tempo de uso, interrompendo a busca nesse momento, o que 
+garante que o tempo de busca estará dentro do limite estabelecido com margem.
 
 ### 3.4 Mini-torneio (item 2.2 b)
 
@@ -130,7 +158,8 @@ Partidas via `server.py`, posição inicial padrão. O primeiro agente joga com 
 
 **Implementação mais bem-sucedida:** heurística customizada (4 vitórias em 4 partidas).
 
-TODO: comentário sobre os resultados.
+Como é possível observar, a heurística customizada ganha das estratégias de Contagem e Posicional em todas as
+simulações jogadas, provando assim que a estratégia oferece melhores resultados do que as vistas anteriormente.
 
 ### 3.5 Agente do torneio (`tournament_agent.py`)
 
